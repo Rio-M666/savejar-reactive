@@ -40,13 +40,13 @@ sleep 10
 echo "Lasna balance: $(cast balance "$BURNER" --rpc-url "$LASNA_RPC_URL") wei lREACT"
 
 echo "== 1. Deploy SaveJar (Sepolia) =="
-JAR=$(forge create --rpc-url "$SEPOLIA_RPC_URL" --private-key "$BURNER_PRIVATE_KEY" \
+JAR=$(forge create --broadcast --rpc-url "$SEPOLIA_RPC_URL" --private-key "$BURNER_PRIVATE_KEY" \
   src/SaveJar.sol:SaveJar --constructor-args "$PROXY" 604800 | awk '/Deployed to:/{print $3}')
 echo "SaveJar: $JAR"
 
 echo "== 2. Deploy AutoSaveReactive (Lasna) =="
 # args: originChainId, destinationChainId, jar, saveBps=2000, threshold=0.01 ETH, dailyCap=0.05 ETH
-RSC=$(forge create --rpc-url "$LASNA_RPC_URL" --private-key "$BURNER_PRIVATE_KEY" --value 1ether \
+RSC=$(forge create --broadcast --rpc-url "$LASNA_RPC_URL" --private-key "$BURNER_PRIVATE_KEY" --value 1ether \
   src/AutoSaveReactive.sol:AutoSaveReactive \
   --constructor-args "$SEPOLIA_ID" "$SEPOLIA_ID" "$JAR" 2000 10000000000000000 50000000000000000 \
   | awk '/Deployed to:/{print $3}')
@@ -58,7 +58,7 @@ JAR_ADDRESS=$JAR RSC_ADDRESS=$RSC \
 
 echo "== 4. Demo deposit: 0.1 ETH (expect a 0.02 ETH auto-save) =="
 DEPOSIT_TX=$(cast send "$JAR" "deposit()" --value 0.1ether \
-  --rpc-url "$SEPOLIA_RPC_URL" --private-key "$BURNER_PRIVATE_KEY" --json | python3 -c 'import json,sys; print(json.load(sys.stdin)["transactionHash"])')
+  --rpc-url "$SEPOLIA_RPC_URL" --private-key "$BURNER_PRIVATE_KEY" | awk '/^transactionHash/{print $2}')
 echo "Deposit tx: $DEPOSIT_TX"
 
 cat > deployments.md <<EOF

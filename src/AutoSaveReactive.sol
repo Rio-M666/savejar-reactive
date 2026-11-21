@@ -23,7 +23,14 @@ contract AutoSaveReactive is AbstractReactive {
     uint256 public constant DEPOSIT_TOPIC = uint256(keccak256("Deposit(address,uint256)"));
 
     /// @notice Callback gas limit. Reactive ignores requests below 100_000 gas.
-    uint64 private constant CALLBACK_GAS_LIMIT = 300_000;
+    /// @dev Sized generously on purpose: before invoking the recipient, the
+    ///      destination callback proxy withholds `_extraGas` (150_000 on Sepolia)
+    ///      for its own accounting plus `_maxChargeGas` (50_000) for payment
+    ///      settlement, and only the remainder reaches the callback method.
+    ///      A 300_000 request left only ~57k for `applySave`, which ran out of
+    ///      gas on the first live delivery (see deployments.md). The fee is
+    ///      charged on gas actually used, so a high limit costs nothing extra.
+    uint64 private constant CALLBACK_GAS_LIMIT = 1_000_000;
 
     uint256 public immutable originChainId;
     uint256 public immutable destinationChainId;

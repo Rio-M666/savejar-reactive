@@ -66,8 +66,11 @@ anyway). Everything after that happens on its own. That is the track brief in on
   injected as the first payload argument (RVM ID authentication, per Reactive docs).
 - `src/AutoSaveReactive.sol` — the reactive contract. Subscribes to `Deposit` on Sepolia
   in its constructor via the system contract (`0x8888…8888`), keeps per-user accrual
-  state, and requests callbacks with `requestCallbackV_1_0` (gas limit 300k, above the
-  100k minimum the docs require).
+  state, and requests callbacks with `requestCallbackV_1_0` (gas limit 1M — far above
+  the 100k minimum, because the destination callback proxy withholds its own
+  accounting and payment-settlement gas before forwarding the remainder; a 300k
+  request demonstrably starved the callback on the first live deployment, see
+  `deployments.md`).
 - Chains: origin = destination = Ethereum Sepolia (11155111); reactive = Lasna (5318007).
 
 ## Parameters used in the demo deployment
